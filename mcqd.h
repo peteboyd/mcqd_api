@@ -20,15 +20,12 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-
 #ifndef MCQD
 #define MCQD
+
 #include <iostream>
 #include <algorithm>
 #include <assert.h>
-#ifdef DBG
-using namespace std;
-#endif
 
 class Maxclique {
   const bool* const* e;
@@ -79,8 +76,8 @@ class Maxclique {
       std::cout << "]" << std::endl;
     }
 #endif
-    ColorClass() : sz(0), i(0) {}
-    ColorClass(const int sz) : sz(sz), i(0) { init(sz); }
+    ColorClass() : i(0), sz(0) {}
+    ColorClass(const int sz) : i(0), sz(sz) { init(sz); }
     ~ColorClass() { if (i) delete [] i;
     }
     void init(const int sz) { i = new int[sz]; rewind(); }
@@ -144,7 +141,7 @@ public:
   };
 };
 
-Maxclique::Maxclique (const bool* const* conn, const int sz, const float tt) : pk(0), level(1), Tlimit(tt), V(sz), Q(sz), QMAX(sz) {
+Maxclique::Maxclique (const bool* const* conn, const int sz, const float tt) : pk(0), level(1), Tlimit(tt), V(sz), QMAX(sz), Q(sz) {
   assert(conn!=0 && sz>0);
   for (int i=0; i < sz; i++) V.push(i);
   e = conn;
