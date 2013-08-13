@@ -9,7 +9,7 @@ def random(size=50):
     #WARNING the dtype MUST be np.int32 for the array to be passed correctly
     # to the _mcqd api... not sure why this is.
     test_graph = np.random.randint(0,2,(size,size))
-    mcqd.maxclique(np.array(test_graph, dtype=np.int32), size)
+    return mcqd.maxclique(np.array(test_graph, dtype=np.int32), size)
 
 def test_clq():
     with open('test.clq', 'r') as f:
@@ -24,6 +24,8 @@ def test_clq():
             edge_matrix[ind1][ind2] = 1
             edge_matrix[ind2][ind1] = 1
 
-    mcqd.maxclique(edge_matrix, graph_size)
+    return mcqd.maxclique(edge_matrix, graph_size)
 
-random(56)
+#check = random(56)
+check = test_clq() 
+print check
