@@ -11,6 +11,9 @@ def random(size=50):
     test_graph = np.random.randint(0,2,(size,size))
     return mcqd.maxclique(np.array(test_graph, dtype=np.int32), size)
 
+def ones(size=50):
+    return mcqd.maxclique(np.ones((size, size), dtype=np.int32), size)
+
 def test_clq():
     with open('test.clq', 'r') as f:
         first_line = f.readline()
@@ -25,7 +28,7 @@ def test_clq():
             edge_matrix[ind2][ind1] = 1
 
     return mcqd.maxclique(edge_matrix, graph_size)
-
-#check = random(56)
-check = test_clq() 
+#check = ones(99)
+check = random(11644)
+#check = test_clq() 
 print check
