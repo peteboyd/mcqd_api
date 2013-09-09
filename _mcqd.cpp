@@ -105,30 +105,21 @@ static PyObject * correspondence(PyObject * self, PyObject *args)
     for (i=0; i < size1; i++){
         attr = PyList_GetItem(elem1, i); // now convert to c++ string
         atoms1[i] = PyString_AsString(attr);
-        //std::cout<<atoms1[i]<<std::endl;
     }
     for (i=0; i < size2; i++){
         attr = PyList_GetItem(elem2, i); // now convert to c++ string
         atoms2[i] = PyString_AsString(attr);
-        //std::cout<<atoms2[i]<<std::endl;
     }
     //Converted all the data, now create correspondence and adjacency matrix.
     //declare a list of pointers to pointers (dynamic 2x2 array)
-    int max = size1*size2;
     inc = 0;
     for (i=0; i < size1; i++){
         for (j=0; j< size2; j++){
             if ((*atoms1[i]) == (*atoms2[j])){
                 //add the pair to the correspondence graph
-                //ipo = PyInt_FromLong(i);
-                //jpo = PyInt_FromLong(j);
                 pair = Py_BuildValue("(ii)", (i), (j));
-                //PyTuple_SetItem(pair, 0, ipo);
-                //PyTuple_SetItem(pair, 1, jpo);
                 PyList_Append(nodes, pair);
-                Py_DECREF(pair);
                 inc++;
-                //std::cout<<i<<" "<<j<<std::endl;
             }
         }
     }
@@ -140,7 +131,6 @@ static PyObject * correspondence_edges(PyObject * self, PyObject *args){
     //Adjacency matrix stuff
     PyArrayObject* dist1;
     PyArrayObject* dist2;
-    PyObject* value;
     PyObject* node1;
     PyObject* node2;
     PyObject* nodes;
@@ -167,55 +157,56 @@ static PyObject * correspondence_edges(PyObject * self, PyObject *args){
     }
     npy_intp dims[2];
     PyArrayObject * adj_array;
-    //PyObject * value;
     dims[0] = (npy_intp) inc;
     dims[1] = (npy_intp) inc;
+    PyObject* value;
     double di, dj;
-    int *i_1, *i_2, *j_1, *j_2;
+    Py_ssize_t zero = 0;
+    Py_ssize_t one = 1;
+    Py_ssize_t size;
+    long int i_1, i_2, j_1, j_2;
     void *arrptr;
     char *charptr;
     adj_array = (PyArrayObject*) PyArray_SimpleNew(2, dims, NPY_INT);
-    //void **vp = (void**)adj_array->data;
     for (i=0; i<inc; i++){
         for (j=0; j<inc; j++){
+            arrptr = PyArray_GETPTR2(adj_array, i, j);
+            charptr = (char*) arrptr;
             if (i != j){
                 node1 = PyList_GET_ITEM(nodes, i);
                 node2 = PyList_GET_ITEM(nodes, j);
-                i_1 = (int(*))PyTuple_GetItem(node1, 0);
-                i_2 = (int(*))PyTuple_GetItem(node2, 0);
-                j_1 = (int(*))PyTuple_GetItem(node1, 1);
-                j_2 = (int(*))PyTuple_GetItem(node2, 1);
-                //Py_DECREF(node1);
-                //Py_DECREF(node2);
-                di = d1[(*i_1)][(*i_2)];
-                dj = d2[(*j_1)][(*j_2)];
-                if (std::abs(di-dj) < tol){
-                    adj[i][j] = 1;
-                    adj[j][i] = 1;
-                    value = PyInt_FromLong(1);
-                    arrptr = PyArray_GETPTR2(adj_array, i, j);
-                    charptr = (char*) arrptr;
-                    PyArray_SETITEM(adj_array, charptr, value);
+                i_1 = PyInt_AS_LONG(PyTuple_GET_ITEM(node1, zero));
+                i_2 = PyInt_AS_LONG(PyTuple_GET_ITEM(node2, zero));
+                j_1 = PyInt_AS_LONG(PyTuple_GET_ITEM(node1, one));
+                j_2 = PyInt_AS_LONG(PyTuple_GET_ITEM(node2, one));
+                if ((i_1 != i_2) && (j_1 != j_2)){
+                    di = d1[i_1][i_2];
+                    dj = d2[j_1][j_2];
+                    if (std::abs(di-dj) < tol){
+                        adj[i][j] = 1;
+                        adj[j][i] = 1;
+                        value = PyInt_FromLong(1);
+                    }
+                    else{
+                    value = PyInt_FromLong(0);
+                    adj[i][j] = 0;
+                    adj[j][i] = 0;
+                    }
                 }
                 else{
                     value = PyInt_FromLong(0);
-                    arrptr = PyArray_GETPTR2(adj_array, i, j);
-                    charptr = (char*) arrptr;
-                    PyArray_SETITEM(adj_array, charptr, value);
                     adj[i][j] = 0;
                     adj[j][i] = 0;
                 }
             }
             else{
                 value = PyInt_FromLong(0);
-                arrptr = PyArray_GETPTR2(adj_array, i, j);
-                charptr = (char*) arrptr;
-                PyArray_SETITEM(adj_array, charptr, value);
                 adj[i][j] = 0;
                 adj[j][i] = 0;
             }
+            PyArray_SETITEM(adj_array, charptr, value);
+            Py_DECREF(value);
         }
     }
-    //adj_array = PyArray_FromDimsAndData(2, dims, NPY_INT32, (char*) adj);
     return PyArray_Return(adj_array); 
 }
