@@ -42,6 +42,6 @@ def corr():
     dist2 = distance.cdist(coord2,coord2)
     p = mcqd.correspondence(atoms1, atoms2)
     q = mcqd.correspondence_edges(p,dist1, dist2, 0.1)
-    print q
+    print p
 
 corr()
