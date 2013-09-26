@@ -78,8 +78,17 @@ static PyObject * mxclique(PyObject *self, PyObject *args)
     for (i=0; i<qsize; i++){
         PyList_SetItem(ret_array, i, PyInt_FromLong((long) qmax[i]));
     }
+    //destruct e 
+    for (i=0; i < size; i++){
+        delete [] e[i];
+    }
+    delete [] e;
+    delete qmax;
+    //delete pp;
+    //Py_DECREF(conn);
 
-    return ret_array; 
+    //return ret_array; 
+    return Py_BuildValue("O", ret_array);
 };
 
 //Computes the correspondence graphs for a pair of arrays.
@@ -123,8 +132,14 @@ static PyObject * correspondence(PyObject * self, PyObject *args)
             }
         }
     }
-
-    return nodes;
+    //delete atoms1;
+    //delete atoms2;
+    //Py_DECREF(elem1);
+    //Py_DECREF(elem2);
+    //Py_DECREF(attr);
+    //Py_DECREF(pair);
+    //return nodes;
+    return Py_BuildValue("O", nodes); 
 }
 
 static PyObject * correspondence_edges(PyObject * self, PyObject *args){
@@ -208,5 +223,17 @@ static PyObject * correspondence_edges(PyObject * self, PyObject *args){
             Py_DECREF(value);
         }
     }
-    return PyArray_Return(adj_array); 
+    //destruct adj
+    for (i=0; i < inc; i++){
+        delete [] adj[i];
+    }
+    delete [] adj;
+
+    //Py_DECREF(dist1);
+    //Py_DECREF(dist2);
+    //Py_DECREF(node1);
+    //Py_DECREF(node2);
+    //Py_DECREF(nodes);
+    //return PyArray_Return(adj_array); 
+    return Py_BuildValue("O", adj_array); 
 }
