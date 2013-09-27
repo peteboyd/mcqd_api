@@ -83,7 +83,7 @@ static PyObject * mxclique(PyObject *self, PyObject *args)
         delete [] e[i];
     }
     delete [] e;
-    delete [] qmax;
+    //delete [] qmax;
     return Py_BuildValue("O", ret_array);
 };
 
@@ -201,8 +201,8 @@ static PyObject * correspondence_edges(PyObject * self, PyObject *args){
                 else{
                     value = PyInt_FromLong(0);
                 }
-                Py_DECREF(node1);
-                Py_DECREF(node2);
+                //Py_DECREF(node1);
+                //Py_DECREF(node2);
             }
             else{
                 value = PyInt_FromLong(0);
