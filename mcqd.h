@@ -103,6 +103,7 @@ class Maxclique {
     void set_i2(const int ii)  { i2 = ii; }
     int get_i2() const { return i2; }
     void inc_i1()  { i1++; }
+    ~StepCount() {}
   };
   StepCount *S;
   bool connection(const int i, const int j) const { return e[i][j]; }

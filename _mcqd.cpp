@@ -46,9 +46,6 @@ static PyObject * mxclique(PyObject *self, PyObject *args)
      * #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION 
      * breaks this program as it has no access to ->data.
      */
-    //const double (*pp)[size] = (double(*)[size])conn->data;
-    //const int (*pp)[size] = (int(*)[size])conn->data; #include <numpy/arrayobject.h>
-    //int (*pp)[size] = (int(*)[size])PyArray_DATA(conn);
     int i, j;
     long int val;
     //declare a list of pointers to pointers (dynamic 2x2 array)
@@ -59,7 +56,6 @@ static PyObject * mxclique(PyObject *self, PyObject *args)
     }
     for (i=0; i < size; i++){
        for (j=0; j<size; j++){
-           //To replace pp
            arrptr = PyArray_GETPTR2(conn, i, j);
            charptr = (char*) arrptr;
            val = PyInt_AS_LONG(PyArray_GETITEM(conn, charptr));
@@ -67,17 +63,7 @@ static PyObject * mxclique(PyObject *self, PyObject *args)
                e[i][j] = true;
                e[j][i] = true;
            }
-           //To replace pp
-           /* old version
-           if (pp[i][j] == 1.){
-               e[i][j] = true;
-               e[j][i] = true;
-           }
-           */
-           //std::cout<<pp[i][j];
-           //std::cout<<e[i][j];
        }
-       //std::cout<<std::endl;
     }
     
     Maxclique m(e, size);
@@ -95,15 +81,9 @@ static PyObject * mxclique(PyObject *self, PyObject *args)
     //destruct e 
     for (i=0; i < size; i++){
         delete [] e[i];
-    //    delete [] pp[i];
     }
     delete [] e;
-    //delete [] pp;
-    delete qmax;
-    //delete pp;
-    //Py_DECREF(conn);
-
-    //return ret_array; 
+    delete [] qmax;
     return Py_BuildValue("O", ret_array);
 };
 
@@ -152,8 +132,8 @@ static PyObject * correspondence(PyObject * self, PyObject *args)
     //delete atoms2;
     //Py_DECREF(elem1);
     //Py_DECREF(elem2);
-    //Py_DECREF(attr);
-    //Py_DECREF(pair);
+    Py_DECREF(attr);
+    Py_DECREF(pair);
     //return nodes;
     return Py_BuildValue("O", nodes); 
 }
@@ -176,16 +156,7 @@ static PyObject * correspondence_edges(PyObject * self, PyObject *args){
     };
     int inc = PySequence_Length(nodes);
     int i, j;
-    const int size1 = PyArray_DIM(dist1, 0);
-    const int size2 = PyArray_DIM(dist2,0); 
-    double (*d1)[size1] = (double(*)[size1])PyArray_DATA(dist1);
-    double (*d2)[size2] = (double(*)[size2])PyArray_DATA(dist2);
 
-    int** adj = new int*[inc];
-    for (i=0; i<inc; i++){
-        adj[i] = new int[inc];
-        memset(adj[i], 0, inc *sizeof(int));
-    }
     npy_intp dims[2];
     PyArrayObject * adj_array;
     dims[0] = (npy_intp) inc;
@@ -194,61 +165,55 @@ static PyObject * correspondence_edges(PyObject * self, PyObject *args){
     double di, dj;
     Py_ssize_t zero = 0;
     Py_ssize_t one = 1;
-    Py_ssize_t size;
     long int i_1, i_2, j_1, j_2;
-    void *arrptr;
-    char *charptr;
+    void *adj_ptr, *dist1_ptr, *dist2_ptr;
+    char *adj_charptr, *dist1_charptr, *dist2_charptr;
     adj_array = (PyArrayObject*) PyArray_SimpleNew(2, dims, NPY_INT);
     for (i=0; i<inc; i++){
         for (j=0; j<inc; j++){
-            arrptr = PyArray_GETPTR2(adj_array, i, j);
-            charptr = (char*) arrptr;
+            adj_ptr = PyArray_GETPTR2(adj_array, i, j);
+            adj_charptr = (char*) adj_ptr;
             if (i != j){
+                //get node indices as pyintegers,
+                //get distances from the py objects dist1 and dist2 
+                //instead of dist
                 node1 = PyList_GET_ITEM(nodes, i);
                 node2 = PyList_GET_ITEM(nodes, j);
                 i_1 = PyInt_AS_LONG(PyTuple_GET_ITEM(node1, zero));
                 i_2 = PyInt_AS_LONG(PyTuple_GET_ITEM(node2, zero));
                 j_1 = PyInt_AS_LONG(PyTuple_GET_ITEM(node1, one));
                 j_2 = PyInt_AS_LONG(PyTuple_GET_ITEM(node2, one));
+                dist1_ptr = PyArray_GETPTR2(dist1, i_1, i_2);
+                dist1_charptr = (char*) dist1_ptr;
+                dist2_ptr = PyArray_GETPTR2(dist2, j_1, j_2);
+                dist2_charptr = (char*) dist2_ptr;
                 if ((i_1 != i_2) && (j_1 != j_2)){
-                    di = d1[i_1][i_2];
-                    dj = d2[j_1][j_2];
+                    di = PyFloat_AS_DOUBLE(PyArray_GETITEM(dist1, dist1_charptr));
+                    dj = PyFloat_AS_DOUBLE(PyArray_GETITEM(dist2, dist2_charptr));
+                    
                     if (std::abs(di-dj) < tol){
-                        adj[i][j] = 1;
-                        adj[j][i] = 1;
                         value = PyInt_FromLong(1);
                     }
                     else{
                     value = PyInt_FromLong(0);
-                    adj[i][j] = 0;
-                    adj[j][i] = 0;
                     }
                 }
                 else{
                     value = PyInt_FromLong(0);
-                    adj[i][j] = 0;
-                    adj[j][i] = 0;
                 }
+                Py_DECREF(node1);
+                Py_DECREF(node2);
             }
             else{
                 value = PyInt_FromLong(0);
-                adj[i][j] = 0;
-                adj[j][i] = 0;
             }
-            PyArray_SETITEM(adj_array, charptr, value);
+            PyArray_SETITEM(adj_array, adj_charptr, value);
             Py_DECREF(value);
         }
     }
-    //destruct adj
-    for (i=0; i < inc; i++){
-        delete [] adj[i];
-    }
-    delete [] adj;
 
     //Py_DECREF(dist1);
     //Py_DECREF(dist2);
-    //Py_DECREF(node1);
-    //Py_DECREF(node2);
     //Py_DECREF(nodes);
     //return PyArray_Return(adj_array); 
     return Py_BuildValue("O", adj_array); 
