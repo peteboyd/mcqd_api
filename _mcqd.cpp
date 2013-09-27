@@ -30,6 +30,8 @@ static PyObject * mxclique(PyObject *self, PyObject *args)
 {
     PyArrayObject* conn;
     PyObject *ret_array;
+    void *arrptr;
+    char *charptr;
     int size;
     int *qmax;
     int qsize;
@@ -46,8 +48,9 @@ static PyObject * mxclique(PyObject *self, PyObject *args)
      */
     //const double (*pp)[size] = (double(*)[size])conn->data;
     //const int (*pp)[size] = (int(*)[size])conn->data; #include <numpy/arrayobject.h>
-    const int (*pp)[size] = (int(*)[size])PyArray_DATA(conn);
+    //int (*pp)[size] = (int(*)[size])PyArray_DATA(conn);
     int i, j;
+    long int val;
     //declare a list of pointers to pointers (dynamic 2x2 array)
     bool** e = new bool*[size];
     for (i=0; i<size; i++){
@@ -56,10 +59,21 @@ static PyObject * mxclique(PyObject *self, PyObject *args)
     }
     for (i=0; i < size; i++){
        for (j=0; j<size; j++){
+           //To replace pp
+           arrptr = PyArray_GETPTR2(conn, i, j);
+           charptr = (char*) arrptr;
+           val = PyInt_AS_LONG(PyArray_GETITEM(conn, charptr));
+           if (val == 1){
+               e[i][j] = true;
+               e[j][i] = true;
+           }
+           //To replace pp
+           /* old version
            if (pp[i][j] == 1.){
                e[i][j] = true;
                e[j][i] = true;
            }
+           */
            //std::cout<<pp[i][j];
            //std::cout<<e[i][j];
        }
@@ -81,8 +95,10 @@ static PyObject * mxclique(PyObject *self, PyObject *args)
     //destruct e 
     for (i=0; i < size; i++){
         delete [] e[i];
+    //    delete [] pp[i];
     }
     delete [] e;
+    //delete [] pp;
     delete qmax;
     //delete pp;
     //Py_DECREF(conn);
