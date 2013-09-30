@@ -26,9 +26,12 @@
 #include <iostream>
 #include <algorithm>
 #include <assert.h>
+#include <Python.h>
+#include <numpy/arrayobject.h>
 
 class Maxclique {
-  const bool* const* e;
+  //const bool* const* e;
+  PyArrayObject* e;
   int pk, level;
   const float Tlimit;
   class Vertices {
@@ -106,7 +109,8 @@ class Maxclique {
     ~StepCount() {}
   };
   StepCount *S;
-  bool connection(const int i, const int j) const { return e[i][j]; }
+  //bool connection(const int i, const int j) const { return e[i][j]; }
+  bool connection(int i, int j); 
   bool cut1(const int, const ColorClass&);
   void cut2(const Vertices&, Vertices&);
   void color_sort(Vertices&);
@@ -131,7 +135,8 @@ public:
     }
   }
 #endif
-  Maxclique(const bool* const*, const int, const float=0.025);
+  //Maxclique(const bool* const*, const int, const float=0.025);
+  Maxclique(PyArrayObject*, const int, const float=0.025);
   int steps() const { return pk; }
   void mcq(int* &maxclique, int &sz) { _mcq(maxclique, sz, false); }
   void mcqdyn(int* &maxclique, int &sz) { _mcq(maxclique, sz, true); }
@@ -142,7 +147,8 @@ public:
   };
 };
 
-Maxclique::Maxclique (const bool* const* conn, const int sz, const float tt) : pk(0), level(1), Tlimit(tt), V(sz), QMAX(sz), Q(sz) {
+//Maxclique::Maxclique (const bool* const* conn, const int sz, const float tt) : pk(0), level(1), Tlimit(tt), V(sz), QMAX(sz), Q(sz) {
+Maxclique::Maxclique (PyArrayObject* conn, const int sz, const float tt) : pk(0), level(1), Tlimit(tt), V(sz), QMAX(sz), Q(sz) {
   assert(conn!=0 && sz>0);
   for (int i=0; i < sz; i++) V.push(i);
   e = conn;
@@ -169,6 +175,24 @@ void Maxclique::_mcq(int* &maxclique, int &sz, bool dyn) {
     maxclique[i] = QMAX.at(i);
   }
   sz = QMAX.size();
+}
+
+bool Maxclique::connection(int i, int j) {
+    void *arrptr;
+    char *charptr;
+    long val;
+    arrptr = PyArray_GETPTR2(e, i, j);
+    charptr = (char*) arrptr;
+    val = PyInt_AS_LONG(PyArray_GETITEM(e, charptr));
+    //std::cout<<val<<std::endl;
+    if (val == 1){
+        return true;
+    }
+    else{
+        return false;
+    }
+    
+    //return PyInt_AS_LONG(PyArray_GETITEM(e, charptr));
 }
 
 void Maxclique::Vertices::init_colors() { 
