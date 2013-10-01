@@ -46,35 +46,8 @@ static PyObject * mxclique(PyObject *self, PyObject *args)
      */
     int i;
     //declare a list of pointers to pointers (dynamic 2x2 array)
-    /*
-    bool** e = new bool*[size];
-    for (i=0; i<size; i++){
-        e[i] = new bool[size];
-        memset(e[i], 0, size *sizeof(bool));
-    }
-    for (i=0; i < size; i++){
-       for (j=0; j<size; j++){
-           arrptr = PyArray_GETPTR2(conn, i, j);
-           charptr = (char*) arrptr;
-           val = PyInt_AS_LONG(PyArray_GETITEM(conn, charptr));
-           if (val == 1){
-               e[i][j] = true;
-               e[j][i] = true;
-           }
-       }
-    }
-    Maxclique m(e, size);
-    */ 
     //Maxclique m(conn, size);
     //m.mcq(qmax, qsize);  // run max clique with improved coloring
-    /*
-    //destruct e 
-    for (i=0; i < size; i++){
-        delete [] e[i];
-    }
-    delete [] e;
-    */
-    //delete [] qmax;
     Maxclique md(conn, size, 0.025);  //(3rd parameter is optional - default is 0.025 - this heuristics parameter enables you to use dynamic resorting of vertices (time expensive)
     // on the part of the search tree that is close to the root - in this case, approximately 2.5% of the search tree -
     // you can probably find a more optimal value for your graphs
@@ -84,10 +57,7 @@ static PyObject * mxclique(PyObject *self, PyObject *args)
     for (i=0; i<qsize; i++){
         PyList_SetItem(ret_array, i, PyInt_FromLong((long) qmax[i]));
     }
-
-    //delete [] qmax;
     return ret_array;
-    //return Py_BuildValue("O", ret_array);
 };
 
 //Computes the correspondence graphs for a pair of arrays.
@@ -134,14 +104,14 @@ static PyObject * correspondence_edges(PyObject * self, PyObject *args){
     PyObject* node1;
     PyObject* node2;
     PyObject* nodes;
-    PyArrayObject* adj_array;
+    PyObject* val;
+    PyObject *py_di, *py_dj;
     double tol;
-    if (!PyArg_ParseTuple(args, "OOOdO",
+    if (!PyArg_ParseTuple(args, "OOOd",
                           &nodes,
                           &dist1,
                           &dist2,
-                          &tol,
-                          &adj_array
+                          &tol
                           )){
         return NULL;
     };
@@ -156,8 +126,14 @@ static PyObject * correspondence_edges(PyObject * self, PyObject *args){
     long i_1, i_2, j_1, j_2;
     void *adj_ptr, *dist1_ptr, *dist2_ptr;
     char *adj_charptr, *dist1_charptr, *dist2_charptr;
-    //PyArrayObject *adj_array;
-    //adj_array = (PyArrayObject*) PyArray_ZEROS(2, dims, NPY_INT, 0);
+    PyArrayObject* adj_array;
+    adj_array = (PyArrayObject*) PyArray_ZEROS(2, dims, NPY_INT, 0);
+    //Mem check return a 'python None' value if the allocation failed.
+    if (adj_array == NULL){
+        Py_INCREF(Py_None);
+        return Py_None;
+    }
+
     for (i=0; i<inc; i++){
         for (j=i+1; j<inc; j++){
             //if (i != j){
@@ -175,27 +151,29 @@ static PyObject * correspondence_edges(PyObject * self, PyObject *args){
             if ((i_1 != i_2) && (j_1 != j_2)){
                 dist1_ptr = PyArray_GETPTR2(dist1, i_1, i_2);
                 dist1_charptr = (char*) dist1_ptr;
-                di = PyFloat_AS_DOUBLE(PyArray_GETITEM(dist1, dist1_charptr));
+                py_di = PyArray_GETITEM(dist1, dist1_charptr);
+                di = PyFloat_AS_DOUBLE(py_di);
+                Py_DECREF(py_di);
                 dist2_ptr = PyArray_GETPTR2(dist2, j_1, j_2);
                 dist2_charptr = (char*) dist2_ptr;
-                dj = PyFloat_AS_DOUBLE(PyArray_GETITEM(dist2, dist2_charptr));
+                py_dj = PyArray_GETITEM(dist2, dist2_charptr);
+                dj = PyFloat_AS_DOUBLE(py_dj);
+                Py_DECREF(py_dj);
                 if (std::abs(di-dj) < tol){
                     adj_ptr = PyArray_GETPTR2(adj_array, i, j);
                     adj_charptr = (char*) adj_ptr;
-                    PyArray_SETITEM(adj_array, adj_charptr, PyInt_FromLong(1));
+                    val = PyInt_FromLong(1);
+                    PyArray_SETITEM(adj_array, adj_charptr, val);
+                    Py_DECREF(val);
                     adj_ptr = PyArray_GETPTR2(adj_array, j, i);
                     adj_charptr = (char*) adj_ptr;
-                    PyArray_SETITEM(adj_array, adj_charptr, PyInt_FromLong(1));
+                    val = PyInt_FromLong(1);
+                    PyArray_SETITEM(adj_array, adj_charptr, val);
+                    Py_DECREF(val);
                 }
             }
         }
     }
 
-    //Py_DECREF(dist1);
-    //Py_DECREF(dist2);
-    //Py_DECREF(nodes);
-    Py_INCREF(Py_None);
-    return Py_None;
-    //return Py_BuildValue("N", PyArray_Return(adj_array)); 
-    //return Py_BuildValue("O", adj_array); 
+    return PyArray_Return(adj_array);
 }
