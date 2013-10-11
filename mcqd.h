@@ -55,7 +55,8 @@ class Maxclique {
       std::cout << "]" << std::endl;
     }
 #endif
-    Vertices(int size) : sz(0) { v = new Vertex[size]; }
+    //Vertices(int size) : sz(0) { v = new Vertex[size]; }
+    Vertices(int size);
     ~Vertices () {}
     void dispose() { if (v) delete [] v; }
     void sort() { std::sort(v, v+sz, desc_degree); }
@@ -83,7 +84,8 @@ class Maxclique {
     ColorClass(const int sz) : i(0), sz(sz) { init(sz); }
     ~ColorClass() { if (i) delete [] i;
     }
-    void init(const int sz) { i = new int[sz]; rewind(); }
+    //void init(const int sz) { i = new int[sz]; rewind(); }
+    void init(const int sz);
     void push(const int ii) { i[sz++] = ii; };
     void pop() { sz--; };
     void rewind() { sz = 0; };
@@ -147,14 +149,40 @@ public:
   };
 };
 
+Maxclique::Vertices::Vertices (int size) {
+    sz = 0;
+    v = new (std::nothrow) Vertex[size];
+    if (v==0){
+        std::cout<<"Could not allocate the memory for the vertices"<<std::endl;
+        return;
+    }
+}
+
+void Maxclique::ColorClass::init(const int sz){
+    i = new (std::nothrow) int[sz];
+    if (i==0){
+        std::cout<<"Could not allocate memory to the ColorClass"<<std::endl;
+        return;
+    }
+    rewind();
+}
 //Maxclique::Maxclique (const bool* const* conn, const int sz, const float tt) : pk(0), level(1), Tlimit(tt), V(sz), QMAX(sz), Q(sz) {
 Maxclique::Maxclique (PyArrayObject* conn, const int sz, const float tt) : pk(0), level(1), Tlimit(tt), V(sz), QMAX(sz), Q(sz) {
   assert(conn!=0 && sz>0);
   for (int i=0; i < sz; i++) V.push(i);
   e = conn;
-  C = new ColorClass[sz + 1];
+  C = new (std::nothrow) ColorClass[sz + 1];
+  if (C==0){
+      std::cout<<"Could not allocate the memory to the colorclass"<<std::endl;
+      return;
+  }
   for (int i=0; i < sz + 1; i++) C[i].init(sz + 1);
-  S = new StepCount[sz + 1];
+  S = new (std::nothrow) StepCount[sz + 1];
+  if (S==0){
+      std::cout<<"Could not allocate the memory to the step count class"<<std::endl;
+      return;
+  }
+      
 }
 
 void Maxclique::_mcq(int* &maxclique, int &sz, bool dyn) { 
@@ -170,7 +198,12 @@ void Maxclique::_mcq(int* &maxclique, int &sz, bool dyn) {
   }
   else
     expand(V);
-  maxclique = new int[QMAX.size()]; 
+  maxclique = new (std::nothrow) int[QMAX.size()]; 
+  if (maxclique == 0){
+      std::cout<<"Could not allocate the memory to the maxclique array"<<std::endl;
+      return;
+  }
+
   for (int i=0; i<QMAX.size(); i++) { 
     maxclique[i] = QMAX.at(i);
   }
