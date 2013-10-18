@@ -199,8 +199,10 @@ void Maxclique::_mcq(int* &maxclique, int &sz, bool dyn) {
   else
     expand(V);
   maxclique = new (std::nothrow) int[QMAX.size()]; 
-  if (maxclique == 0){
+  if (!maxclique){
       std::cout<<"Could not allocate the memory to the maxclique array"<<std::endl;
+      sz = 0;
+      maxclique = new int[0];
       return;
   }
 
