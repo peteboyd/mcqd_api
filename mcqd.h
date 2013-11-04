@@ -69,9 +69,9 @@ class Maxclique {
     Vertex& end() const { return v[sz - 1]; };
   };
   class ColorClass {
-    int *i;
     int sz;
   public:
+    int *i;
 #ifdef DBG
     void dbg_i(const string msg="") const {
       std::cout << msg << " Class: [";
