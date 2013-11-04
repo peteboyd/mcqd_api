@@ -216,9 +216,12 @@ bool Maxclique::connection(int i, int j) {
     void *arrptr;
     char *charptr;
     long val;
+    PyObject *conn_item;
     arrptr = PyArray_GETPTR2(e, i, j);
     charptr = (char*) arrptr;
-    val = PyInt_AS_LONG(PyArray_GETITEM(e, charptr));
+    conn_item = PyArray_GETITEM(e, charptr);
+    val = PyInt_AS_LONG(conn_item);
+    Py_DECREF(conn_item);
     //std::cout<<val<<std::endl;
     if (val == 1){
         return true;
