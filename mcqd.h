@@ -176,7 +176,10 @@ Maxclique::Maxclique (PyArrayObject* conn, const int sz, const float tt) : pk(0)
       std::cout<<"Could not allocate the memory to the colorclass"<<std::endl;
       return;
   }
-  for (int i=0; i < sz + 1; i++) C[i].init(sz + 1);
+  for (int i=0; i < sz + 1; i++){ 
+      C[i].init(sz + 1);
+      if (C[i].i == 0) return;
+  }
   S = new (std::nothrow) StepCount[sz + 1];
   if (S==0){
       std::cout<<"Could not allocate the memory to the step count class"<<std::endl;
