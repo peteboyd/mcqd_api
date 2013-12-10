@@ -9,7 +9,9 @@ include_dirs = [os.getcwd()]
 module = Extension('_mcqd',
                    include_dirs = include_dirs +  get_numpy_include_dirs(),
                    sources = ['_mcqd.cpp'],
-                   language = 'c++')
+                   language = 'c++',
+                   extra_link_args=["-O"])
+# NB: add "-g" to the extra_link_args list if debugging is required
 
 setup (name = 'mcqd',
        description = 'Package for finding a maximal clique',
