@@ -143,6 +143,7 @@ public:
   void mcq(int* &maxclique, int &sz) { _mcq(maxclique, sz, false); }
   void mcqdyn(int* &maxclique, int &sz) { _mcq(maxclique, sz, true); }
   ~Maxclique() {
+    //Py_XDECREF(e);
     if (C) delete [] C;
     if (S) delete [] S;
     V.dispose();
@@ -217,19 +218,21 @@ void Maxclique::_mcq(int* &maxclique, int &sz, bool dyn) {
 
 bool Maxclique::connection(int i, int j) {
     void *arrptr;
-    char *charptr;
-    long val;
     PyObject *conn_item;
+    PyObject *one = PyInt_FromLong(1L);
     arrptr = PyArray_GETPTR2(e, i, j);
-    charptr = (char*) arrptr;
-    conn_item = PyArray_GETITEM(e, charptr);
-    val = PyInt_AS_LONG(conn_item);
-    Py_DECREF(conn_item);
+    //charptr = (char*) arrptr;
+    conn_item = PyArray_GETITEM(e, (char*) arrptr);
+    //val = PyInt_AS_LONG(conn_item);
     //std::cout<<val<<std::endl;
-    if (val == 1){
+    if (PyObject_RichCompareBool(conn_item, one, Py_EQ) == 1){
+        //Py_DECREF(conn_item);
+        //Py_DECREF(one);
         return true;
     }
     else{
+        //Py_DECREF(conn_item);
+        //Py_DECREF(one);
         return false;
     }
     
