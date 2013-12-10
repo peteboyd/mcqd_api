@@ -108,7 +108,7 @@ class Maxclique {
     void set_i2(const int ii)  { i2 = ii; }
     int get_i2() const { return i2; }
     void inc_i1()  { i1++; }
-    ~StepCount() {}
+    //~StepCount() {}
   };
   StepCount *S;
   //bool connection(const int i, const int j) const { return e[i][j]; }
@@ -226,15 +226,17 @@ bool Maxclique::connection(int i, int j) {
     //val = PyInt_AS_LONG(conn_item);
     //std::cout<<val<<std::endl;
     if (PyObject_RichCompareBool(conn_item, one, Py_EQ) == 1){
-        //Py_DECREF(conn_item);
-        //Py_DECREF(one);
+        Py_DECREF(conn_item);
+        Py_DECREF(one);
         return true;
     }
     else{
-        //Py_DECREF(conn_item);
-        //Py_DECREF(one);
+        Py_DECREF(conn_item);
+        Py_DECREF(one);
         return false;
     }
+    Py_DECREF(conn_item);
+    Py_DECREF(one);
     
     //return PyInt_AS_LONG(PyArray_GETITEM(e, charptr));
 }
