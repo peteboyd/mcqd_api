@@ -55,8 +55,8 @@ class Maxclique {
       std::cout << "]" << std::endl;
     }
 #endif
-    //Vertices(int size) : sz(0) { v = new Vertex[size]; }
-    Vertices(int size);
+    Vertices(int size) : sz(0) { v = new Vertex[size]; }
+    //Vertices(int size);
     ~Vertices () {}
     void dispose() { if (v) delete [] v; }
     void sort() { std::sort(v, v+sz, desc_degree); }
@@ -69,9 +69,9 @@ class Maxclique {
     Vertex& end() const { return v[sz - 1]; };
   };
   class ColorClass {
+    int *i;
     int sz;
   public:
-    int *i;
 #ifdef DBG
     void dbg_i(const string msg="") const {
       std::cout << msg << " Class: [";
@@ -84,8 +84,8 @@ class Maxclique {
     ColorClass(const int sz) : sz(sz), i(0) { init(sz); }
     ~ColorClass() { if (i) delete [] i;
     }
-    //void init(const int sz) { i = new int[sz]; rewind(); }
-    void init(const int sz);
+    void init(const int sz) { i = new int[sz]; rewind(); }
+    //void init(const int sz);
     void push(const int ii) { i[sz++] = ii; };
     void pop() { sz--; };
     void rewind() { sz = 0; };
@@ -112,7 +112,7 @@ class Maxclique {
   };
   StepCount *S;
   //bool connection(const int i, const int j) const { return e[i][j]; }
-  bool connection(int i, int j); 
+  bool connection(const int i, const int j); 
   bool cut1(const int, const ColorClass&);
   void cut2(const Vertices&, Vertices&);
   void color_sort(Vertices&);
@@ -150,43 +150,14 @@ public:
   };
 };
 
-Maxclique::Vertices::Vertices (int size) {
-    sz = 0;
-    v = new (std::nothrow) Vertex[size];
-    if (v==0){
-        std::cout<<"Could not allocate the memory for the vertices"<<std::endl;
-        return;
-    }
-}
-
-void Maxclique::ColorClass::init(const int sz){
-    i = new (std::nothrow) int[sz];
-    if (i==0){
-        std::cout<<"Could not allocate memory to the ColorClass"<<std::endl;
-        return;
-    }
-    rewind();
-}
 //Maxclique::Maxclique (const bool* const* conn, const int sz, const float tt) : pk(0), level(1), Tlimit(tt), V(sz), QMAX(sz), Q(sz) {
 Maxclique::Maxclique (PyArrayObject* conn, const int sz, const float tt) : pk(0), level(1), Tlimit(tt), V(sz), QMAX(sz), Q(sz) {
   assert(conn!=0 && sz>0);
   for (int i=0; i < sz; i++) V.push(i);
   e = conn;
-  C = new (std::nothrow) ColorClass[sz + 1];
-  if (C==0){
-      std::cout<<"Could not allocate the memory to the colorclass"<<std::endl;
-      return;
-  }
-  for (int i=0; i < sz + 1; i++){ 
-      C[i].init(sz + 1);
-      if (C[i].i == 0) return;
-  }
-  S = new (std::nothrow) StepCount[sz + 1];
-  if (S==0){
-      std::cout<<"Could not allocate the memory to the step count class"<<std::endl;
-      return;
-  }
-      
+  C = new ColorClass[sz + 1];
+  for (int i=0; i < sz + 1; i++) C[i].init(sz + 1);
+  S = new StepCount[sz + 1];
 }
 
 void Maxclique::_mcq(int* &maxclique, int &sz, bool dyn) { 
@@ -202,21 +173,17 @@ void Maxclique::_mcq(int* &maxclique, int &sz, bool dyn) {
   }
   else
     expand(V);
-  maxclique = new (std::nothrow) int[QMAX.size()]; 
-  if (!maxclique){
-      std::cout<<"Could not allocate the memory to the maxclique array"<<std::endl;
-      sz = 0;
-      maxclique = new int[0];
-      return;
-  }
-
+  //std::cout<<"Inside _mcq, clique size is "<<QMAX.size()<<std::endl;
+  //std::cout<<"Inside _mcq, vertex size is "<<V.size()<<std::endl;
+  if (QMAX.size() == 0) return;
+  maxclique = new int[QMAX.size()]; 
   for (int i=0; i<QMAX.size(); i++) { 
     maxclique[i] = QMAX.at(i);
   }
   sz = QMAX.size();
 }
 
-bool Maxclique::connection(int i, int j) {
+bool Maxclique::connection(const int i, const int j) {
     void *arrptr;
     PyObject *conn_item;
     PyObject *one = PyInt_FromLong(1L);
@@ -235,9 +202,6 @@ bool Maxclique::connection(int i, int j) {
         Py_DECREF(one);
         return false;
     }
-    Py_DECREF(conn_item);
-    Py_DECREF(one);
-    
     //return PyInt_AS_LONG(PyArray_GETITEM(e, charptr));
 }
 
