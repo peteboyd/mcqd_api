@@ -49,17 +49,27 @@ static PyObject * mxclique(PyObject *self, PyObject *args)
     //declare a list of pointers to pointers (dynamic 2x2 array)
     //Maxclique m(conn, size);
     //m.mcq(qmax, qsize);  // run max clique with improved coloring
+
     Maxclique md(conn, size, 0.025);  //(3rd parameter is optional - default is 0.025 - this heuristics parameter enables you to use dynamic resorting of vertices (time expensive)
     // on the part of the search tree that is close to the root - in this case, approximately 2.5% of the search tree -
     // you can probably find a more optimal value for your graphs
     md.mcqdyn(qmax, qsize);  // run max clique with improved coloring and dynamic sorting of vertices
-    ret_array = PyList_New(qsize);
-     
-    for (i=0; i<qsize; i++){
-        x = PyInt_FromLong((long) qmax[i]);
-        PyList_SetItem(ret_array, i, x);
+    // problems are created if the qsize is 0
+    if (qsize == 0){
+        Py_INCREF(Py_None);
+        delete [] qmax;
+        return Py_None;
     }
-    return ret_array;
+    else{
+        ret_array = PyList_New(0);
+        for (i=0; i<qsize; i++){
+            x = PyInt_FromLong((long) qmax[i]);
+            PyList_Append(ret_array, x);
+            Py_DECREF(x);
+        }
+        delete [] qmax;  //AAAAHHHHHH HAAAAAAAAAAA
+        return ret_array;
+    }
 };
 
 //Computes the correspondence graphs for a pair of arrays.
@@ -67,7 +77,7 @@ static PyObject * correspondence(PyObject * self, PyObject *args)
 {
     PyObject* elem1;
     PyObject* elem2;
-    PyObject* pair = PyTuple_New(2); 
+    PyObject* pair; 
     PyObject *nodes = PyList_New(0);
     if (!PyArg_ParseTuple(args, "OO",
                           &elem1,
@@ -111,7 +121,7 @@ static PyObject * correspondence_edges(PyObject * self, PyObject *args){
     PyObject* val;
     PyObject *py_di, *py_dj;
     npy_intp dims[2];
-    int i, j;
+    int i, j, edge_count = 0;
     double di, dj;
     Py_ssize_t zero = 0;
     Py_ssize_t one = 1;
@@ -135,6 +145,7 @@ static PyObject * correspondence_edges(PyObject * self, PyObject *args){
     dims[0] = (npy_intp) inc;
     dims[1] = (npy_intp) inc;
     adj_array = (PyArrayObject*) PyArray_ZEROS(2, dims, NPY_INT, 0);
+    //std::cout<<"The Dims is "<<dims[0]<<" , "<<dims[1]<<std::endl;
     //Mem check return a 'python None' value if the allocation failed.
     if (adj_array == NULL){
         Py_XDECREF(adj_array);
@@ -168,6 +179,7 @@ static PyObject * correspondence_edges(PyObject * self, PyObject *args){
                 PyObject* diff = PyNumber_Subtract(py_di, py_dj);
                 PyObject* abs_diff = PyNumber_Absolute(diff);
                 if (PyObject_RichCompareBool(abs_diff, tol, Py_LT) == 1){
+                    edge_count++;
                     adj_ptr = PyArray_GETPTR2(adj_array, i, j);
                     //adj_charptr = (char*) adj_ptr;
                     val = PyInt_FromLong(1);
@@ -186,6 +198,6 @@ static PyObject * correspondence_edges(PyObject * self, PyObject *args){
             }
         }
     }
-    
+    //std::cout<<"The number of edges found is: "<<edge_count<<std::endl;    
     return PyArray_Return(adj_array);
 }
