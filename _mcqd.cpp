@@ -18,13 +18,31 @@ static PyMethodDef functions[] = {
     {"correspondence_edges", correspondence_edges, METH_VARARGS},
     {NULL, NULL, 0, NULL} //Not sure why I need this but will not import properly otherwise
 };
+/* Python 3.x one has to create a PyModuleDef structure and then pass a reference to
+ * it with the function PyModule_Create */
 
+static struct PyModuleDef mcqd =
+{
+    PyModuleDef_HEAD_INIT,
+    "mcqd", /* name of module */
+    "",
+    -1,
+    functions
+}
+
+PyMODINIT_FUNC PyInit_mcqd(void)
+{
+    return PyModule_Create(&mcqd)
+}
+
+/*
 PyMODINIT_FUNC init_mcqd(void)
 {
     Py_InitModule("_mcqd", functions);
     import_array();
-    return;
 }
+*/
+
 
 static PyObject * mxclique(PyObject *self, PyObject *args)
 {
@@ -63,7 +81,7 @@ static PyObject * mxclique(PyObject *self, PyObject *args)
     else{
         ret_array = PyList_New(0);
         for (i=0; i<qsize; i++){
-            x = PyInt_FromLong((long) qmax[i]);
+            x = PyLong_FromLong((long) qmax[i]);
             PyList_Append(ret_array, x);
             Py_DECREF(x);
         }
@@ -122,12 +140,11 @@ static PyObject * correspondence_edges(PyObject * self, PyObject *args){
     PyObject *py_di, *py_dj;
     npy_intp dims[2];
     int i, j, edge_count = 0;
-    double di, dj;
     Py_ssize_t zero = 0;
     Py_ssize_t one = 1;
     long i_1, i_2, j_1, j_2;
     void *adj_ptr, *dist1_ptr, *dist2_ptr;
-    char *adj_charptr, *dist1_charptr, *dist2_charptr;
+    //char *adj_charptr, *dist1_charptr, *dist2_charptr;
     if (!PyArg_ParseTuple(args, "OOOO",
                           &nodes,
                           &dist1,
@@ -161,10 +178,10 @@ static PyObject * correspondence_edges(PyObject * self, PyObject *args){
             //instead of dist
             node1 = PyList_GET_ITEM(nodes, i);
             node2 = PyList_GET_ITEM(nodes, j);
-            i_1 = PyInt_AS_LONG(PyTuple_GET_ITEM(node1, zero));
-            i_2 = PyInt_AS_LONG(PyTuple_GET_ITEM(node2, zero));
-            j_1 = PyInt_AS_LONG(PyTuple_GET_ITEM(node1, one));
-            j_2 = PyInt_AS_LONG(PyTuple_GET_ITEM(node2, one));
+            i_1 = PyLong_AS_LONG(PyTuple_GET_ITEM(node1, zero));
+            i_2 = PyLong_AS_LONG(PyTuple_GET_ITEM(node2, zero));
+            j_1 = PyLong_AS_LONG(PyTuple_GET_ITEM(node1, one));
+            j_2 = PyLong_AS_LONG(PyTuple_GET_ITEM(node2, one));
             
             if ((i_1 != i_2) && (j_1 != j_2)){
                 dist1_ptr = PyArray_GETPTR2(dist1, i_1, i_2);
@@ -182,12 +199,12 @@ static PyObject * correspondence_edges(PyObject * self, PyObject *args){
                     edge_count++;
                     adj_ptr = PyArray_GETPTR2(adj_array, i, j);
                     //adj_charptr = (char*) adj_ptr;
-                    val = PyInt_FromLong(1);
+                    val = PyLong_FromLong(1);
                     PyArray_SETITEM(adj_array, (char*) adj_ptr, val);
                     Py_DECREF(val);
                     adj_ptr = PyArray_GETPTR2(adj_array, j, i);
                     //adj_charptr = (char*) adj_ptr;
-                    val = PyInt_FromLong(1);
+                    val = PyLong_FromLong(1);
                     PyArray_SETITEM(adj_array, (char*) adj_ptr, val);
                     Py_DECREF(val);
                 }

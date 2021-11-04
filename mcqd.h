@@ -186,11 +186,11 @@ void Maxclique::_mcq(int* &maxclique, int &sz, bool dyn) {
 bool Maxclique::connection(const int i, const int j) {
     void *arrptr;
     PyObject *conn_item;
-    PyObject *one = PyInt_FromLong(1L);
+    PyObject *one = PyLong_FromLong(1L);
     arrptr = PyArray_GETPTR2(e, i, j);
     //charptr = (char*) arrptr;
     conn_item = PyArray_GETITEM(e, (char*) arrptr);
-    //val = PyInt_AS_LONG(conn_item);
+    //val = PyLong_AS_LONG(conn_item);
     //std::cout<<val<<std::endl;
     if (PyObject_RichCompareBool(conn_item, one, Py_EQ) == 1){
         Py_DECREF(conn_item);
@@ -202,7 +202,7 @@ bool Maxclique::connection(const int i, const int j) {
         Py_DECREF(one);
         return false;
     }
-    //return PyInt_AS_LONG(PyArray_GETITEM(e, charptr));
+    //return PyLong_AS_LONG(PyArray_GETITEM(e, charptr));
 }
 
 void Maxclique::Vertices::init_colors() { 
